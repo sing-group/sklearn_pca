@@ -32,20 +32,47 @@ def perform_pca(data, n_components=2):
     
     return principal_components, pca
 
-def plot_pca(principal_components, data, metadata=None, group=None):
+def plot_pca(principal_components, data, metadata=None, group=None, shape=None):
     plt.figure(figsize=(8, 6))
     
-    if metadata is not None and group is not None:
-        merged_data = pd.DataFrame(principal_components, index=data.index)
-        merged_data = merged_data.merge(metadata[[group]], left_index=True, right_index=True)
-        groups = merged_data[group].unique()
-        
-        for g in groups:
-            idx = merged_data[group] == g
-            plt.scatter(merged_data.loc[idx, 0], merged_data.loc[idx, 1], label=g, s=50)
-        plt.legend()
-    else:
-        plt.scatter(principal_components[:, 0], principal_components[:, 1], c='blue', s=50)
+    merged_data = pd.DataFrame(principal_components, index=data.index)
+    
+    if metadata is not None:
+        if group:
+            merged_data = merged_data.merge(metadata[[group]], left_index=True, right_index=True)
+        if shape:
+            merged_data = merged_data.merge(metadata[[shape]], left_index=True, right_index=True)
+    
+    colors = merged_data[group].unique() if group else [None]
+    shapes = merged_data[shape].unique() if shape else [None]
+    
+    markers = ['o', 's', 'D', '^', 'v', '<', '>', 'p', '*', 'h', 'H', 'x', 'd', '|', '_']
+    color_map = plt.get_cmap('tab10')
+    
+    for i, color in enumerate(colors):
+        for j, shape_marker in enumerate(shapes):
+            idx = (merged_data[group] == color) if group else True
+            idx = idx & (merged_data[shape] == shape_marker) if shape else idx
+            plt.scatter(merged_data.loc[idx, 0], merged_data.loc[idx, 1], s=50, marker=markers[j], color=color_map(i))
+    
+    # Create a legend for colors
+    if group:
+        for i, color in enumerate(colors):
+            plt.scatter([], [], color=color_map(i), label=color)
+    
+    # Create a legend for shapes
+    if shape:
+        for shape_marker, marker in zip(shapes, markers):
+            plt.scatter([], [], c='k', marker=marker, label=shape_marker)
+
+    if group or shape:
+        if group and shape:
+            title = f"{group} (group) and {shape} (shape)"
+        elif group:
+            title = f"{group} (group)"
+        else:
+            title = f"{shape} (shape)"
+        plt.legend(title=title, bbox_to_anchor=(1.05, 1), loc='upper left')
     
     plt.xlabel('Principal Component 1')
     plt.ylabel('Principal Component 2')
@@ -58,7 +85,8 @@ def plot_pca(principal_components, data, metadata=None, group=None):
 @click.option('--transpose', is_flag=True, help='Transpose the input data before applying PCA')
 @click.option('--metadata', type=click.Path(exists=True), help='Path to the metadata file')
 @click.option('--group', type=str, help='Column name in metadata file to group by')
-def main(file_path, transpose, metadata, group):
+@click.option('--shape', type=str, help='Column name in metadata file to shape by')
+def main(file_path, transpose, metadata, group, shape):
     # Load data
     data = load_data(file_path)
     
@@ -77,7 +105,7 @@ def main(file_path, transpose, metadata, group):
     principal_components, pca = perform_pca(data)
     
     # Plot PCA results
-    plot_pca(principal_components, data, metadata_df, group)
+    plot_pca(principal_components, data, metadata_df, group, shape)
     
     # Print explained variance ratio
     print("Explained variance ratio:", pca.explained_variance_ratio_)
