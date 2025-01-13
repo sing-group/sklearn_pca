@@ -20,7 +20,7 @@ def load_data(file_path):
     
     return data
 
-def perform_pca(data, n_components=2):
+def perform_pca(data, n_components=3):
     # Standardize the data
     features = data.columns
     x = data.loc[:, features].values
@@ -32,8 +32,8 @@ def perform_pca(data, n_components=2):
     
     return principal_components, pca
 
-def plot_pca(principal_components, data, metadata=None, group=None, shape=None):
-    plt.figure(figsize=(8, 6))
+def plot_pca(principal_components, data, comp1=0, comp2=1, metadata=None, group=None, shape=None, output_file=None):
+    plt.figure(figsize=(12, 10))
     
     merged_data = pd.DataFrame(principal_components, index=data.index)
     
@@ -53,14 +53,12 @@ def plot_pca(principal_components, data, metadata=None, group=None, shape=None):
         for j, shape_marker in enumerate(shapes):
             idx = (merged_data[group] == color) if group else True
             idx = idx & (merged_data[shape] == shape_marker) if shape else idx
-            plt.scatter(merged_data.loc[idx, 0], merged_data.loc[idx, 1], s=50, marker=markers[j], color=color_map(i))
+            plt.scatter(merged_data.loc[idx, comp1], merged_data.loc[idx, comp2], s=50, marker=markers[j], color=color_map(i))
     
-    # Create a legend for colors
     if group:
         for i, color in enumerate(colors):
             plt.scatter([], [], color=color_map(i), label=color)
     
-    # Create a legend for shapes
     if shape:
         for shape_marker, marker in zip(shapes, markers):
             plt.scatter([], [], c='k', marker=marker, label=shape_marker)
@@ -72,13 +70,17 @@ def plot_pca(principal_components, data, metadata=None, group=None, shape=None):
             title = f"{group} (group)"
         else:
             title = f"{shape} (shape)"
-        plt.legend(title=title, bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.legend(title=title, bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.title('2 Component PCA')
+    plt.xlabel(f'Principal Component {comp1 + 1}')
+    plt.ylabel(f'Principal Component {comp2 + 1}')
+    plt.title(f'PCA: Component {comp1 + 1} vs Component {comp2 + 1}')
     plt.grid()
-    plt.show()
+    
+    if output_file:
+        plt.savefig(output_file, bbox_inches='tight')  # Ensure the legend fits within the image
+    else:
+        plt.show()
 
 @click.command()
 @click.argument('file_path', type=click.Path(exists=True))
@@ -86,7 +88,8 @@ def plot_pca(principal_components, data, metadata=None, group=None, shape=None):
 @click.option('--metadata', type=click.Path(exists=True), help='Path to the metadata file')
 @click.option('--group', type=str, help='Column name in metadata file to group by')
 @click.option('--shape', type=str, help='Column name in metadata file to shape by')
-def main(file_path, transpose, metadata, group, shape):
+@click.option('--output_dir', type=click.Path(), help='Directory to save the output plots')
+def main(file_path, transpose, metadata, group, shape, output_dir):
     # Load data
     data = load_data(file_path)
     
@@ -104,8 +107,19 @@ def main(file_path, transpose, metadata, group, shape):
     # Perform PCA
     principal_components, pca = perform_pca(data)
     
+    # Create output directory if it does not exist
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
     # Plot PCA results
-    plot_pca(principal_components, data, metadata_df, group, shape)
+    if output_dir:
+        plot_pca(principal_components, data, comp1=0, comp2=1, metadata=metadata_df, group=group, shape=shape, output_file=os.path.join(output_dir, 'pca_1_vs_2.png'))
+        plot_pca(principal_components, data, comp1=0, comp2=2, metadata=metadata_df, group=group, shape=shape, output_file=os.path.join(output_dir, 'pca_1_vs_3.png'))
+        plot_pca(principal_components, data, comp1=1, comp2=2, metadata=metadata_df, group=group, shape=shape, output_file=os.path.join(output_dir, 'pca_2_vs_3.png'))
+    else:
+        plot_pca(principal_components, data, comp1=0, comp2=1, metadata=metadata_df, group=group, shape=shape)
+        plot_pca(principal_components, data, comp1=0, comp2=2, metadata=metadata_df, group=group, shape=shape)
+        plot_pca(principal_components, data, comp1=1, comp2=2, metadata=metadata_df, group=group, shape=shape)
     
     # Print explained variance ratio
     print("Explained variance ratio:", pca.explained_variance_ratio_)
