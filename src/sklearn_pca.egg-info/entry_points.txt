@@ -1,0 +1,2 @@
+[console_scripts]
+pca = sklearn_pca.pca:main

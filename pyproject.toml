@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sklearn-pca"
+version = "0.1.0"
+description = "A PCA plotting tool using scikit-learn and matplotlib"
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.6"
+keywords = ["PCA", "scikit-learn", "matplotlib", "data visualization"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "matplotlib",
+    "click"
+]
+
+[project.urls]
+source = "https://github.com/pegi3s/bdip-tools"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+pca = "sklearn_pca.pca:main"

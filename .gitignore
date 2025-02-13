@@ -1,0 +1,4 @@
+.vscode
+docker
+test_data/test_docker*
+dist

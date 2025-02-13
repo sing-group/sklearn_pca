@@ -1,16 +1,16 @@
-import pandas as pd
-import numpy as np
+import click
 import os
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
-import click
+
 
 def load_data(file_path):
-    # Determine the file extension
     _, file_extension = os.path.splitext(file_path)
     
-    # Read the file based on its extension
     if file_extension == '.csv':
         data = pd.read_csv(file_path, index_col=0)
     elif file_extension == '.tsv':
@@ -21,12 +21,10 @@ def load_data(file_path):
     return data
 
 def perform_pca(data, n_components=3):
-    # Standardize the data
     features = data.columns
     x = data.loc[:, features].values
     x_standardized = StandardScaler().fit_transform(x)
     
-    # Perform PCA
     pca = PCA(n_components=n_components)
     principal_components = pca.fit_transform(x_standardized)
     
@@ -90,28 +88,20 @@ def plot_pca(principal_components, data, comp1=0, comp2=1, metadata=None, group=
 @click.option('--shape', type=str, help='Column name in metadata file to shape by')
 @click.option('--output_dir', type=click.Path(), help='Directory to save the output plots')
 def main(file_path, transpose, metadata, group, shape, output_dir):
-    # Load data
     data = load_data(file_path)
     
-    # Transpose data if --transpose flag is set
     if transpose:
         data = data.transpose()
     
-    print(data)
-    
-    # Load metadata if provided
     metadata_df = None
     if metadata:
         metadata_df = load_data(metadata)
     
-    # Perform PCA
     principal_components, pca = perform_pca(data)
     
-    # Create output directory if it does not exist
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Plot PCA results
     if output_dir:
         plot_pca(principal_components, data, comp1=0, comp2=1, metadata=metadata_df, group=group, shape=shape, output_file=os.path.join(output_dir, 'pca_1_vs_2.png'))
         plot_pca(principal_components, data, comp1=0, comp2=2, metadata=metadata_df, group=group, shape=shape, output_file=os.path.join(output_dir, 'pca_1_vs_3.png'))
@@ -120,9 +110,6 @@ def main(file_path, transpose, metadata, group, shape, output_dir):
         plot_pca(principal_components, data, comp1=0, comp2=1, metadata=metadata_df, group=group, shape=shape)
         plot_pca(principal_components, data, comp1=0, comp2=2, metadata=metadata_df, group=group, shape=shape)
         plot_pca(principal_components, data, comp1=1, comp2=2, metadata=metadata_df, group=group, shape=shape)
-    
-    # Print explained variance ratio
-    print("Explained variance ratio:", pca.explained_variance_ratio_)
 
 if __name__ == "__main__":
     main()
