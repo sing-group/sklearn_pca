@@ -28,11 +28,24 @@ s4,B,D
 We would like to perform PCA on this table and colour samples by column `annotation1` (this is `--group`) and give them different shapes based on the `annotation2` column (this is `--shape`):
 
 ```shell
-docker run --rm -v $(pwd):$(pwd) -w $(pwd) singgroup/sklearn_pca pca test_data/data1.tsv --metadata test_data/metadata.csv --group annotation1 --shape annotation2 --output_dir=test_data/test_docker_data1
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) \
+    singgroup/sklearn_pca pca \
+        test_data/data1.tsv \
+        --metadata test_data/metadata.csv \
+        --group annotation1 \
+        --shape annotation2 \
+        --output_dir=test_data/test_docker_data1
 ```
 
 In case your input data must be transposed, as with the `test_data/data2.tsv` file, use also `--transpose`:
 
 ```shell
-docker run --rm -v $(pwd):$(pwd) -w $(pwd) singgroup/sklearn_pca pca test_data/data2.tsv --transpose --metadata test_data/metadata.csv --group annotation1 --shape annotation2 --output_dir=test_data/test_docker_data2
+docker run --rm -v $(pwd):$(pwd) -w $(pwd) \
+    singgroup/sklearn_pca pca \
+        test_data/data2.tsv \
+        --transpose \
+        --metadata test_data/metadata.csv \
+        --group annotation1 \
+        --shape annotation2 \
+        --output_dir=test_data/test_docker_data2
 ```
